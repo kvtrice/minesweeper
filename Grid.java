@@ -110,14 +110,14 @@ public class Grid {
             for (int j = 0; j < gridRows; j++) {
                 if (grid[i][j].getRevealed()) {
                     if (grid[i][j].getState() == GridItemState.BOMB) {
-                        System.out.print("B ");
+                        System.out.print("💣 ");
                     } else if (grid[i][j].getState() == GridItemState.NUM) {
                         System.out.print(grid[i][j].getNumAdjacentBombs() + " ");
                     } else {
                         System.out.print("* ");
                     }
                 } else {
-                    System.out.print(". ");
+                    System.out.print("■ ");
                 }
             }
             System.out.println();
@@ -135,5 +135,23 @@ public class Grid {
             return grid[row][col];
         }
         return null;
+    }
+
+    public boolean checkIfWon() {
+        int numRevealedSquares = 0;
+        int totalNonBombSquares = gridRows * gridRows - numBombs;
+
+        for (int i = 0; i < gridRows; i++) {
+            for (int j = 0; j < gridRows; j++) {
+                if (grid[i][j].getRevealed() && grid[i][j].getState() != GridItemState.BOMB) {
+                    numRevealedSquares++;
+                }
+            }
+        }
+
+        if (numRevealedSquares == totalNonBombSquares) {
+            return true;
+        } else
+            return false;
     }
 }

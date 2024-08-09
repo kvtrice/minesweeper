@@ -4,9 +4,6 @@ import java.util.Scanner;
 public class Game {
 
     // To do:
-    // -- How to know if won?
-    // -- Need to check each time how many squares have been discovered
-    // -- If all undiscovered squares are only bombs then the user wins
     // -- Make the grid prettier with clearer delineation between fried and axes
     // names
     // -- How to add colours or ASCII art?
@@ -19,7 +16,6 @@ public class Game {
         while (playAgain) {
             System.out.println("Welcome to Minesweeper!");
 
-            // Initialise grid so it's in scope
             Grid grid = null;
 
             while (grid == null) {
@@ -40,28 +36,47 @@ public class Game {
             }
 
             boolean gameRunning = true;
-
             while (gameRunning) {
 
                 grid.displayGrid();
-                System.out.println("Enter a co-ordinate to reveal a square (E.g: B4)\n");
+                System.out.println("Enter a co-ordinate to reveal a square (E.g: B4) or 'q' to quit.\n");
                 String chosenSquare = scanner.next();
 
-                if (chosenSquare.length() >= 2) {
-                    int row = Integer.parseInt(chosenSquare.substring(1)) - 1;
-                    int col = Character.toUpperCase(chosenSquare.charAt(0)) - 'A';
+                if (chosenSquare.equalsIgnoreCase("q")) {
+                    System.out.println("You chose to quit the game...\n");
+                    gameRunning = false;
+                    playAgain = false;
+                    break;
+                }
 
-                    if (GridUtils.isValidCoordinate(row, col, grid.getGridRows())) {
-                        grid.revealItem(row, col);
-                        GridItem item = grid.getGridItem(row, col);
-                        if (item.getState() == GridItemState.BOMB) {
-                            grid.displayGrid(); // Display final state
-                            System.out.println("Oh no, you hit a bomb!\n");
-                            gameRunning = false;
+                if (chosenSquare.length() >= 2) {
+
+                    try {
+                        int row = Integer.parseInt(chosenSquare.substring(1)) - 1;
+                        int col = Character.toUpperCase(chosenSquare.charAt(0)) - 'A';
+
+                        if (GridUtils.isValidCoordinate(row, col, grid.getGridRows())) {
+                            grid.revealItem(row, col);
+                            GridItem item = grid.getGridItem(row, col);
+                            if (item.getState() == GridItemState.BOMB) {
+                                grid.displayGrid();
+                                System.out.println("Boom! You hit a bomb!\n");
+                                gameRunning = false;
+                            } else if (grid.checkIfWon() == true) {
+                                grid.displayGrid();
+                                System.out.println("No more squares to reveal...\n");
+                                System.out.println("CONGRATULATIONS, YOU'VE WON!\n");
+                                gameRunning = false;
+                            }
+                        } else {
+                            System.out.println("Invalid square selected. Please try again.");
                         }
-                    } else {
-                        System.out.println("Invalid square selected. Please try again.");
+
+                    } catch (Exception e) {
+                        System.out
+                                .println("Invalid input. Please enter a valid coordinate like 'H2' or 'q' to quit.\n");
                     }
+
                 } else {
                     System.out.println("Invalid input. Please try again.");
                 }
