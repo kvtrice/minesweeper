@@ -4,9 +4,6 @@ import java.util.Scanner;
 public class Game {
 
     // To do:
-    // -- Make the grid prettier with clearer delineation between fried and axes
-    // names
-    // -- How to add colours or ASCII art?
     // -- (MAYBE) Reveal surrounding squares that are also empty (cascading effect)
 
     public void startGame() {

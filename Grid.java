@@ -97,31 +97,64 @@ public class Grid {
     }
 
     public void displayGrid() {
+
         // Columns
-        System.out.print("   ");
+        System.out.print(AnsiColours.RESET + "     ");
         for (int i = 0; i < gridRows; i++) {
-            System.out.print((char) ('A' + i) + " ");
+            System.out.print(AnsiColours.YELLOW + (char) ('A' + i) + " " + AnsiColours.RESET);
+        }
+        System.out.println();
+
+        // Border - top
+        System.out.print("    +");
+        for (int i = 0; i < gridRows; i++) {
+            System.out.print(AnsiColours.LIGHT_GRAY + "-+" + AnsiColours.RESET);
         }
         System.out.println();
 
         // Print Rows
         for (int i = 0; i < gridRows; i++) {
-            System.out.printf("%2d ", i + 1);
+            System.out.printf(AnsiColours.YELLOW + "%2d " + AnsiColours.RESET, i + 1);
+
+            // Border - left
+            System.out.print(AnsiColours.LIGHT_GRAY + "| " + AnsiColours.RESET);
+
             for (int j = 0; j < gridRows; j++) {
                 if (grid[i][j].getRevealed()) {
                     if (grid[i][j].getState() == GridItemState.BOMB) {
-                        System.out.print("💣 ");
+                        System.out.print(AnsiColours.RED + "❊ " + AnsiColours.RESET);
                     } else if (grid[i][j].getState() == GridItemState.NUM) {
-                        System.out.print(grid[i][j].getNumAdjacentBombs() + " ");
+                        String numColour = switch (grid[i][j].getNumAdjacentBombs()) {
+                            case 1 -> AnsiColours.BLUE;
+                            case 2 -> AnsiColours.GREEN;
+                            case 3 -> AnsiColours.RED;
+                            case 4 -> AnsiColours.RED;
+                            case 5 -> AnsiColours.RED;
+                            default -> AnsiColours.CYAN;
+                        };
+
+                        System.out
+                                .print(numColour + grid[i][j].getNumAdjacentBombs() + " " + AnsiColours.RESET);
                     } else {
-                        System.out.print("* ");
+                        System.out.print(AnsiColours.DARK_GRAY + "* " + AnsiColours.RESET);
                     }
                 } else {
-                    System.out.print("■ ");
+                    System.out.print(AnsiColours.WHITE + "■ " + AnsiColours.RESET);
                 }
             }
+
+            // Border - right
+            System.out.print(AnsiColours.LIGHT_GRAY + "|" + AnsiColours.RESET);
             System.out.println();
         }
+
+        // Border - bottom
+        System.out.print("    +");
+        for (int i = 0; i < gridRows; i++) {
+            System.out.print(AnsiColours.LIGHT_GRAY + "-+" + AnsiColours.RESET);
+        }
+        System.out.println();
+
     }
 
     public void revealItem(int row, int col) {
