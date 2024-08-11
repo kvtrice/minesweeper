@@ -28,64 +28,67 @@ public class Grid {
     }
 
     private void setupGrid() {
+        generateNewGrid();
+        placeRandomBombs();
+    }
+
+    private void generateNewGrid() {
         // Create a fresh grid
         for (int i = 0; i < gridRows; i++) {
             for (int j = 0; j < gridRows; j++) {
+                // Grid items start as blank
                 grid[i][j] = new GridItem(GridItemState.BLANK, i, j);
             }
         }
+    }
 
+    private void placeRandomBombs() {
         Random random = new Random();
+        // Hashset to prevent duplicate bomb locations
         Set<String> bombLocations = new HashSet<String>();
 
-        // Set bombs randomly
+        // Continue placing bombs until we have the correct amount
         while (bombLocations.size() < numBombs) {
+
+            // Get a random row and col from a max number based on the gridRows
             int row = random.nextInt(gridRows);
             int col = random.nextInt(gridRows);
+
+            // String for distinct bomb location
             String location = row + "," + col;
 
+            // If at the locaiton there's not already a bomb, add that bomb to the hashset
             if (!bombLocations.contains(location)) {
                 bombLocations.add(location);
+                // Set that gridItem state to be BOMB
                 grid[row][col].setState(GridItemState.BOMB);
             }
         }
     }
 
     private void calculateAdjacentBombs() {
+        int[][] directions = {
+                // {x, y} values
+                { -1, -1 }, // top-left (removing 1 row and 1 col from the current position)
+                { -1, 0 }, // top
+                { -1, 1 }, // top-right
+                { 0, -1 }, // left
+                { 0, 1 }, // right
+                { 1, -1 }, // bottom-left square
+                { 1, 0 }, // bottom
+                { 1, 1 }, // bottom-right (adding +1 row and +1 col to current position)
+        };
+
         for (int row = 0; row < gridRows; row++) {
             for (int col = 0; col < gridRows; col++) {
 
-                // Skip bombs
+                // Skip if bomb
                 if (grid[row][col].getState() == GridItemState.BOMB) {
                     continue;
                 }
 
-                int count = 0;
-
-                // Top-left
-                if (row > 0 && col > 0 && grid[row - 1][col - 1].getState() == GridItemState.BOMB)
-                    count++;
-                // Top
-                if (row > 0 && grid[row - 1][col].getState() == GridItemState.BOMB)
-                    count++;
-                // Top-right
-                if (row > 0 && col < gridRows - 1 && grid[row - 1][col + 1].getState() == GridItemState.BOMB)
-                    count++;
-                // Left
-                if (col > 0 && grid[row][col - 1].getState() == GridItemState.BOMB)
-                    count++;
-                // Right
-                if (col < gridRows - 1 && grid[row][col + 1].getState() == GridItemState.BOMB)
-                    count++;
-                // Bottom-left
-                if (row < gridRows - 1 && col > 0 && grid[row + 1][col - 1].getState() == GridItemState.BOMB)
-                    count++;
-                // Bottom
-                if (row < gridRows - 1 && grid[row + 1][col].getState() == GridItemState.BOMB)
-                    count++;
-                // Bottom-right
-                if (row < gridRows - 1 && col < gridRows - 1 && grid[row + 1][col + 1].getState() == GridItemState.BOMB)
-                    count++;
+                // Get the count of all adjacent bombs relative to current location
+                int count = countAdjacentBombs(row, col, directions);
 
                 if (count > 0) {
                     grid[row][col].setNumAdjacentBombs(count);
@@ -93,76 +96,49 @@ public class Grid {
                 }
             }
         }
-
     }
 
+    private int countAdjacentBombs(int row, int col, int[][] directions) {
+        // Setup counter
+        int count = 0;
+
+        // For each direction get a new row x col coordinate based on current location
+        for (int[] direction : directions) {
+            int newRowCoord = row + direction[0]; // First index is x coord (row)
+            int newColCoord = col + direction[1]; // Second index is y coord (col)
+
+            // If is valid coordinate for this grid & it's a bomb, then increase the counter
+            if (GridUtils.isValidCoordinate(newRowCoord, newColCoord, gridRows)
+                    && grid[newRowCoord][newColCoord].getState() == GridItemState.BOMB) {
+                count++;
+            }
+        }
+
+        return count;
+    }
+
+    // Print the grid out
     public void displayGrid() {
-
-        // Columns
-        System.out.print(AnsiColours.RESET + "     ");
-        for (int i = 0; i < gridRows; i++) {
-            System.out.print(AnsiColours.YELLOW + (char) ('A' + i) + " " + AnsiColours.RESET);
-        }
-        System.out.println();
-
-        // Border - top
-        System.out.print("    +");
-        for (int i = 0; i < gridRows; i++) {
-            System.out.print(AnsiColours.LIGHT_GRAY + "-+" + AnsiColours.RESET);
-        }
-        System.out.println();
+        GridUtils.printColumnHeaders(gridRows);
+        GridUtils.printTopBottomBorder(gridRows);
 
         // Print Rows
         for (int i = 0; i < gridRows; i++) {
-            System.out.printf(AnsiColours.YELLOW + "%2d " + AnsiColours.RESET, i + 1);
-
-            // Border - left
-            System.out.print(AnsiColours.LIGHT_GRAY + "| " + AnsiColours.RESET);
-
-            for (int j = 0; j < gridRows; j++) {
-                if (grid[i][j].getRevealed()) {
-                    if (grid[i][j].getState() == GridItemState.BOMB) {
-                        System.out.print(AnsiColours.RED + "❊ " + AnsiColours.RESET);
-                    } else if (grid[i][j].getState() == GridItemState.NUM) {
-                        String numColour = switch (grid[i][j].getNumAdjacentBombs()) {
-                            case 1 -> AnsiColours.BLUE;
-                            case 2 -> AnsiColours.GREEN;
-                            case 3 -> AnsiColours.RED;
-                            case 4 -> AnsiColours.RED;
-                            case 5 -> AnsiColours.RED;
-                            default -> AnsiColours.CYAN;
-                        };
-
-                        System.out
-                                .print(numColour + grid[i][j].getNumAdjacentBombs() + " " + AnsiColours.RESET);
-                    } else {
-                        System.out.print(AnsiColours.DARK_GRAY + "* " + AnsiColours.RESET);
-                    }
-                } else {
-                    System.out.print(AnsiColours.WHITE + "■ " + AnsiColours.RESET);
-                }
-            }
-
-            // Border - right
-            System.out.print(AnsiColours.LIGHT_GRAY + "|" + AnsiColours.RESET);
-            System.out.println();
+            GridUtils.printRow(grid[i], i);
         }
 
-        // Border - bottom
-        System.out.print("    +");
-        for (int i = 0; i < gridRows; i++) {
-            System.out.print(AnsiColours.LIGHT_GRAY + "-+" + AnsiColours.RESET);
-        }
-        System.out.println();
+        GridUtils.printTopBottomBorder(gridRows);
 
     }
 
     public void revealItem(int row, int col) {
+        // Check if item is valid, if it is then 'reveal' it
         if (GridUtils.isValidCoordinate(row, col, gridRows)) {
             grid[row][col].setRevealed(true);
         }
     }
 
+    // Return gridItem if valid coordinates
     public GridItem getGridItem(int row, int col) {
         if (GridUtils.isValidCoordinate(row, col, gridRows)) {
             return grid[row][col];
@@ -176,15 +152,16 @@ public class Grid {
 
         for (int i = 0; i < gridRows; i++) {
             for (int j = 0; j < gridRows; j++) {
+                // If gridItem has been revealed and isn't a bomb, increase the count of the
+                // number of revealed squares
                 if (grid[i][j].getRevealed() && grid[i][j].getState() != GridItemState.BOMB) {
                     numRevealedSquares++;
                 }
             }
         }
 
-        if (numRevealedSquares == totalNonBombSquares) {
-            return true;
-        } else
-            return false;
+        // If the number of revealed squares is the same as how many non bomb squares
+        // we're expecting, return true, otherwise return false
+        return numRevealedSquares == totalNonBombSquares;
     }
 }
